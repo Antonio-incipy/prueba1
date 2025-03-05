@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego Educativo - Diabetes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-pink-200 flex justify-center items-center h-screen">
+    <div id="app" class="bg-white rounded-2xl shadow-2xl p-8 w-96 text-center relative">
+        <!-- Pantalla de inicio -->
+        <div id="start-screen" class="">
+            <div class="text-6xl">😊</div>
+            <h1 class="font-bold text-lg my-4">¡Hola, soy DIBI y tengo Diabetes!</h1>
+            <p class="mb-4">¿Puedes ayudarme con mi diabetes? Contesta a estas preguntas y aprendamos juntos.</p>
+            <input id="player-name" type="text" placeholder="Tu nombre" class="w-full p-2 border rounded-md">
+            <button onclick="startGame()" class="w-full mt-4 bg-blue-300 text-white font-bold p-2 rounded-full hover:bg-yellow-400">Comenzar</button>
+        </div>
+
+        <!-- Pantalla de preguntas -->
+        <div id="question-screen" class="hidden">
+            <div id="emoji" class="text-6xl">😊</div>
+            <h2 id="question-text" class="text-lg font-bold my-4"></h2>
+            <div id="answers" class="space-y-2"></div>
+            <p class="mt-4">Puntuación: <span id="score">100</span></p>
+        </div>
+
+        <!-- Pantalla final -->
+        <div id="end-screen" class="hidden">
+            <div class="text-6xl">🎉</div>
+            <h2 class="font-bold text-lg my-4">¡Gracias por jugar!</h2>
+            <p id="final-score"></p>
+            <button onclick="restartGame()" class="w-full mt-4 bg-blue-300 text-white font-bold p-2 rounded-full hover:bg-yellow-400">Volver a jugar</button>
+            <button onclick="goToStart()" class="w-full mt-2 bg-blue-300 text-white font-bold p-2 rounded-full hover:bg-yellow-400">Volver al inicio</button>
+        </div>
+    </div>
+
+    <!-- Ranking -->
+    <div id="ranking" class="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-md">
+        <h3 class="font-bold">Ranking</h3>
+        <ul id="ranking-list"></ul>
+    </div>
+
+    <script>
+        let questions = [
+            { q: "¿Qué es la diabetes?", options: ["Una enfermedad de la piel", "Un problema con el azúcar en la sangre", "Un resfriado"], correct: 1 },
+            { q: "¿Cómo controlo mi azúcar?", options: ["Comiendo muchos dulces", "Midiendo mi azúcar y comiendo sano", "No haciendo nada"], correct: 1 },
+            { q: "¿Qué pasa si mi azúcar está muy alta?", options: ["Me sentiré cansado y sediento", "Crecen alas", "Me vuelvo invisible"], correct: 0 },
+            { q: "¿Puedo hacer ejercicio con diabetes?", options: ["Sí, es bueno para la salud", "No, nunca", "Solo en los días fríos"], correct: 0 },
+            { q: "¿El azúcar está en todas las comidas?", options: ["Sí, en diferentes cantidades", "No, solo en dulces", "En los vegetales nada más"], correct: 0 }
+        ];
+        let score = 100;
+        let currentQuestion = 0;
+        let playerName = "";
+
+        function startGame() {
+            playerName = document.getElementById("player-name").value;
+            if (playerName.trim() === "") return alert("Por favor, ingresa tu nombre");
+            document.getElementById("start-screen").classList.add("hidden");
+            document.getElementById("question-screen").classList.remove("hidden");
+            score = 100;
+            currentQuestion = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions.length) return endGame();
+            document.getElementById("question-text").innerText = questions[currentQuestion].q;
+            let answersDiv = document.getElementById("answers");
+            answersDiv.innerHTML = "";
+            questions[currentQuestion].options.forEach((option, index) => {
+                let btn = document.createElement("button");
+                btn.innerText = option;
+                btn.className = "w-full bg-blue-300 text-white p-2 rounded-full hover:bg-green-500";
+                btn.onclick = () => checkAnswer(index);
+                answersDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected) {
+            if (selected === questions[currentQuestion].correct) {
+                score += 10;
+            } else {
+                score -= 10;
+            }
+            updateEmoji();
+            document.getElementById("score").innerText = score;
+            currentQuestion++;
+            setTimeout(showQuestion, 500);
+        }
+
+        function updateEmoji() {
+            let emoji = document.getElementById("emoji");
+            if (score >= 120) emoji.innerText = "🤩";
+            else if (score >= 80) emoji.innerText = "🙂";
+            else emoji.innerText = "😢";
+        }
+
+        function endGame() {
+            document.getElementById("question-screen").classList.add("hidden");
+            document.getElementById("end-screen").classList.remove("hidden");
+            document.getElementById("final-score").innerText = `${playerName}, tu puntuación fue: ${score}`;
+            saveScore();
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function goToStart() {
+            document.getElementById("end-screen").classList.add("hidden");
+            document.getElementById("start-screen").classList.remove("hidden");
+        }
+
+        function saveScore() {
+            let rankings = JSON.parse(localStorage.getItem("ranking")) || [];
+            rankings.unshift({ name: playerName, score });
+            rankings = rankings.slice(0, 10);
+            localStorage.setItem("ranking", JSON.stringify(rankings));
+            updateRanking();
+        }
+
+        function updateRanking() {
+            let rankings = JSON.parse(localStorage.getItem("ranking")) || [];
+            let rankingList = document.getElementById("ranking-list");
+            rankingList.innerHTML = "";
+            rankings.forEach(entry => {
+                let li = document.createElement("li");
+                li.innerText = `${entry.name}: ${entry.score} pts`;
+                rankingList.appendChild(li);
+            });
+        }
+
+        updateRanking();
+    </script>
+</body>
+</html>
